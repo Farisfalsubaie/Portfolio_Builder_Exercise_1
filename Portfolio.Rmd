@@ -1,0 +1,95 @@
+---
+title: "Portfolio"
+author: "Faris Alsubaie"
+date: "11/3/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(rsample)
+library(recipes)
+library(caret)
+```
+
+## Portfolio Builder Exercise #1
+```{r}
+#https://datahub.io/core/natural-gas#resource-natural-gas_zip
+gas_prices <- read.csv("data/monthly_csv.csv")
+gas_pricesD <- read.csv("data/daily_csv.csv")
+```
+```{r}
+summary(gas_prices)
+summary(gas_pricesD)
+```
+# Assess the distribution of the target / response variable.
+
+
+```{r}
+
+mean(gas_prices$Price)
+ggplot(gas_pricesD, aes(x=Price))+
+geom_histogram()
+```
+
+# Is the response skewed?
+
+From the histogram above we can say it is positively skewed.
+
+#Does applying a transformation normalize the distribution?
+Yes, I used log10.
+
+```{r}
+
+
+
+Ngp_d <- log10(gas_pricesD$Price)
+
+hist(log10(gas_pricesD$Price), breaks = 20)
+
+summary(Ngp_d)
+
+#ggplot(x = log10(gas_pricesD$Price))+
+#geom_histogram()
+
+
+#mod <- lm(Price ~ Date, data = gas_pricesD)
+```
+# Assess the dataset for missingness.
+How many observations have missing values?
+Plot the missing values. Does there appear to be any patterns to the missing values?
+How do you think the different imputation approaches would impact modeling results?
+
+ - their is 1 missing value
+```{r cars}
+sum(is.na(gas_pricesD))
+
+gas_pricesD %>%
+  is.na() %>%
+  reshape2::melt() %>%
+  ggplot(aes(Var2, Var1, fill=value)) + 
+    geom_raster() + 
+    coord_flip() +
+    scale_y_continuous(NULL, expand = c(0, 0)) +
+    scale_fill_grey(name = "", labels = c("Present", "Missing")) +
+    xlab("Observation") +
+    theme(axis.text.y  = element_text(size = 4))
+```
+```{r}
+visdat::vis_miss(gas_pricesD, cluster = TRUE)
+```
+
+
+# Assess the variance across the features.
+Do any features have zero variance?
+Do any features have near-zero variance?
+
+```{r}
+
+```
+
