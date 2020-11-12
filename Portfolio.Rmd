@@ -31,7 +31,7 @@ summary(gas_pricesD)
 
 
 ```{r}
-
+dim(gas_pricesD)
 mean(gas_prices$Price)
 ggplot(gas_pricesD, aes(x=Price))+
 geom_histogram()

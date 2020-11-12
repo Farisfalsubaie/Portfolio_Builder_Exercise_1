@@ -1,0 +1,207 @@
+---
+title: "portfolio_2"
+author: "Faris Alsubaie"
+output: html_document
+---
+##Portfolio Builder Exercise #1
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(rsample)
+library(recipes)
+library(caret)
+```
+#Data Set Information:
+
+
+```{r}
+#https://www.kaggle.com/kumarajarshi/life-expectancy-who
+
+Life_Data <- read.csv("data/Life_Expectancy_Data.csv")
+
+
+
+```
+
+```{r}
+summary(Life_Data)
+```
+
+#Assess the distribution of the target / response variable.
+Is the response skewed?
+- Yes
+ 
+
+```{r }
+
+
+ggplot(Life_Data, aes(x=Life.expectancy))+
+geom_histogram()
+```
+Does applying a transformation normalize the distribution?
+- Yes,
+```{r}
+ggplot(Life_Data, aes(x = log10(Life.expectancy))) +
+  geom_histogram()
+```
+
+#Assess the dataset for missingness.
+How many observations have missing values?
+```{r}
+sum(is.na(Life_Data))
+```
+
+Plot the missing values. Does there appear to be any patterns to the missing values?
+```{r}
+Life_Data %>%
+  is.na() %>%
+  reshape2::melt() %>%
+  ggplot(aes(Var2, Var1, fill=value)) + 
+    geom_raster() + 
+    coord_flip() +
+    scale_y_continuous(NULL, expand = c(0, 0)) +
+    scale_fill_grey(name = "", 
+                    labels = c("Present", 
+                               "Missing")) +
+    xlab("Observation") +
+    theme(axis.text.y  = element_text(size = 4))
+```
+
+How do you think the different imputation approaches would impact modeling results?
+
+ - 4% of the value are missing , 15% from GDP would impact the modeling. 
+ 
+```{r ,echo=FALSE}
+visdat::vis_miss(Life_Data, cluster = TRUE)
+```
+
+#Assess the variance across the features.
+Do any features have zero variance?
+Do any features have near-zero variance?
+
+- there are no zero variance or near-zero variance
+```{r}
+nearZeroVar(Life_Data, saveMetrics = TRUE)
+
+```
+
+#Assess the numeric features.
+Do some features have significant skewness?
+Do features have a wide range of values that would benefit from standardization?
+
+```{r}
+recipe(GDP ~ ., data = Life_Data) %>%
+  step_YeoJohnson(all_numeric()) 
+  
+
+
+ ggplot(Life_Data, aes(x=GDP))+
+  geom_histogram()
+
+
+```
+
+#Assess the categorical features.
+Are categorical levels equally spread out across the features or is “lumping” occurring?
+Which values do you think should be one-hot or dummy encoded versus label encoded? Why?
+```{r}
+count(Life_Data, Status) %>% arrange(n)
+```
+
+#Execute a basic feature engineering process.
+First, apply a KNN model to your data without pre-applying feature engineering processes.
+Create and a apply a blueprint of feature engineering processes that you think will help your model improve.
+Now reapply the KNN model to your data that has been feature engineered.
+Did your model performance improve?
+```{r}
+# 1. stratified sampling with the rsample package
+set.seed(123)
+split  <- initial_split(Life_Data, prop = 0.7, strata = "Life.expectancy", na.rm= TRUE)
+
+Life_Data_train  <- training(split)
+Life_Data_test   <- testing(split)
+
+# 2. Feature engineering
+blueprint <- recipe(Life.expectancy ~ ., data = Life_Data_train ) %>%
+  step_nzv(all_nominal()) %>%
+  step_integer(matches("Qual|Cond|QC|Qu")) %>%
+  step_center(all_numeric(), -all_outcomes()) %>%
+  step_scale(all_numeric(), -all_outcomes()) %>%
+  step_dummy(all_nominal(), -all_outcomes(), one_hot = TRUE)
+
+# 3. create a resampling method
+cv <- trainControl(
+  method = "repeatedcv", 
+  number = 10, 
+  repeats = 5
+  )
+
+# 4. create a hyperparameter grid search
+hyper_grid <- expand.grid(k = seq(2, 25, by = 1))
+
+# 5. execute grid search with knn model
+#    use RMSE as preferred metric
+knn_fit <- train(
+  blueprint, 
+  data = Life_Data_train, 
+  method = "knn", 
+  trControl = cv, 
+  tuneGrid = hyper_grid,
+  metric = "RMSE"
+  )
+
+# 6. evaluate results
+# print model results
+knn_fit
+
+# plot cross validation results
+ggplot(knn_fit$results, aes(k, RMSE)) + 
+  geom_line() +
+  geom_point() 
+```
+##Portfolio Builder Exercise #2 
+
+Depending on the type of response variable, apply a linear or logistic regression model.
+First, apply the model to your data without pre-applying feature engineering processes.
+Create and a apply a blueprint of feature engineering processes that you think will help your model improve.
+Now reapply the model to your data that has been feature engineered.
+Did your model performance improve?
+
+```{r}
+
+```
+
+Apply a principal component regression model.
+Perform a grid search over several components.
+Identify and explain the performance of the optimal model.
+
+```{r}
+
+```
+
+Apply a partial least squares regression model.
+Perform a grid search over several components.
+Identify and explain the performance of the optimal model.
+```{r}
+
+```
+
+Apply a regularized regression model.
+Perform a grid search across alpha parameter values ranging between 0–1.
+What is the optimal alpha and lambda values?
+What is the MSE and RMSE for this optimal model?
+How does it compare to your previous models?
+
+```{r}
+
+```
+Pick the best performing model from above.
+Identify the most influential features for this model.
+Plot the top 10 most influential features.
+Do these features have positive or negative impacts on your response variable?
+
+```{r}
+
+```
+
